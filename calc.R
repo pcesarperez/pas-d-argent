@@ -1,106 +1,157 @@
 # calc.R
-# Cálculos específicos sobre los datos de ingresos y gastos.
+# RHomeEconomy 0.8
+#
+# This is a personal project to manage my home economy using Google Spreadsheets and R scripts.
+#
+# Specific calculations over the data containing incomes and expenses.
 
-# Carga de datos de trabajo.
+
+# Initialization.
 source.with.encoding ("init.R", encoding = "UTF-8")
 
 
-# Obtiene una tabla resumen de estimaciones y gastos reales asociados.
+# Gets the current month.
 #
-# @param expenses Tabla de gastos e ingresos.
-# @param month Mes para el que se desea obtener el resumen (mes actual por defecto).
-# @param year Año para el que se deea obtener el resumen (año actual por defecto).
+# @returns The current month in numeric format.
+get_current_month <- function ( ) {
+	return (as.numeric (format (Sys.Date ( ), "%m")))
+}
+
+
+# Gets the current year.
 #
-# @returns Devuelve una tabla resumen de estimaciones con los siguientes campos:
+# @returns The current year in numeric format.
+get_current_year <- function ( ) {
+	return (as.numeric (format (Sys.Date ( ), "%Y")))
+}
+
+
+# Gets a table with the budget projections filtered out from the expenses data.
 #
-# * `Id`: Identificador de la entrada estimada.
-# * `Fecha`: Fecha de anotación de la estimación.
-# * `Tipo`: Tipo de gasto.
-# * `Cerrado`: Indica si la estimación ya está cerrada.
-# * `Importe.Estimado`: Importe de la estimación realizada.
-# * `Importe.Real`: Importe real asociado a la estimación.
-# * `Balance`: Diferencia entre gastos estimados y reales.
-# * `Observaciones`: Observaciones asociadas al gasto.
-get_estimation_table <- function (expenses, month = NA, year = NA) {
-	# Si no se especifica mes o año, tomamos el mes y año actual para el filtrado.
+# @param expenses Income/expenses data.
+# @param month Month to filter the budget projections
+# @param year Year to filter the budget projections.
+#
+# @returns A table with the budget projections for the given month and year.
+get_budget_projections <- function (expenses, month, year) {
+	budget_projections <- expenses %>%
+		filter (Is.Budget == TRUE, Month == month, Year == year) %>%
+		select (Id, Date, Type, Is.Closed, Projected.Amount = Amount, Comments)
+
+	return (budget_projections)
+}
+
+
+# Gets a table with the budget consumption filtered out from the expenses data.
+#
+# @param expenses Income/expenses data.
+# @param month Month to filter the budget consumption
+# @param year Year to filter the budget consumption
+#
+# @returns A table with the budget consumption for the given month and year.
+get_budget_consumption <- function (expenses, month, year) {
+	budget_consumption <- expenses %>%
+		filter (complete.cases (Reference), Month == month, Year == year) %>%
+		group_by (Reference) %>%
+		summarize (Actual.Amount = sum (Amount))
+
+	return (budget_consumption)
+}
+
+
+# Gets a table with the budget summary for a given month and year.
+#
+# @param expenses Incomes/expenses data frame.
+# @param month Month to summarize (current month by default).
+# @param year Year to summarize (current year by default).
+#
+# @returns A budget summary table with the following columns:
+#
+# * `Id`: Id of the budget.
+# * `Date`: Date of the budget.
+# * `Type`: Type of expense.
+# * `Is.Closed`: Logical value to state if the budget is closed.
+# * `Projected.Amount`: Projected amount of the budget.
+# * `Actual.Amount`: Actual amount consumed in the budget.
+# * `Balance`: Difference between projected and actual amount of the budget.
+# * `Comments`: Comments of the budget.
+get_budget_summary <- function (expenses, month = NA, year = NA) {
+	# If month and year are not specified, the current date is used.
 	if (is.na (month) || is.na (year)) {
-		month <- as.numeric (format (Sys.Date ( ), "%m"))
-		year <- as.numeric (format (Sys.Date ( ), "%Y"))
+		month <- get_current_month ( )
+		year <- get_current_year ( )
 	}
 
-	# En primer lugar obtenemos un _data frame_ con las estimaciones realizadas.
-	estimated <- expenses %>%
-		filter (Estimado == TRUE, Mes == month, Año == year) %>%
-		select (Id, Fecha, Tipo, Cerrado, Importe.Estimado = Importe, Observaciones)
+	# Filters out a data frame with the budget expenses.
+	budget_projections <- get_budget_projections (expenses, month, year)
 
-	# En segundo lugar obtenemos otro _data frame_ con los importes reales asociados a cada estimación.
-	real <- expenses %>%
-		filter (complete.cases (Referencia)) %>%
-		group_by (Referencia) %>%
-		summarize (Importe.Real = sum (Importe))
+	# Filters out a data frame with the expenses related to each declared budget.
+	budget_consumption <- get_budget_consumption (expenses, month, year)
 
-	# Finalmente, unimos los dos _data frames_ para mostrar los importes estimados y los reales.
-	estimation_table <- left_join (estimated, real, by = c ("Id" = "Referencia")) %>%
-		mutate (Balance = Importe.Real - Importe.Estimado) %>%
-		select (Id, Fecha, Tipo, Cerrado, Importe.Estimado, Importe.Real, Balance, Observaciones)
+	# Joins the two data frames to obtain the budget summary.
+	budget_summary <- left_join (budget_projections, budget_consumption, by = c ("Id" = "Reference")) %>%
+		mutate (Balance = Actual.Amount - Projected.Amount) %>%
+		select (Id, Date, Type, Is.Closed, Projected.Amount, Actual.Amount, Balance, Comments)
 
-	return (estimation_table)
+	return (budget_summary)
 }
 
 
-# Obtiene el total de gastos estimados no cerrados para un mes y año determinado.
+# Gets the total amount of projected and not closed budgets for a given budget summary.
 #
-# @param estimation_table Tabla de estimaciones para un mes y año determinados.
+# @param budget_summary Budget summary.
 #
-# @returns Balance de cuentas (es decir, saldo final) de las estimaciones para un mes y año determinados.
-get_estimation_expected_balance <- function (estimation_table) {
-	estimation_expected_balance <- filter (estimation_table, Cerrado == FALSE) %>%
-		summarize (sum (Importe.Estimado, na.rm = TRUE))
+# @returns Final balance for the projected budgets in the budget summary.
+get_projected_budgets_balance <- function (budget_summary) {
+	projected_budgets_balance <- filter (budget_summary, Is.Closed == FALSE) %>%
+		summarize (sum (Projected.Amount, na.rm = TRUE))
 
-	return (estimation_expected_balance [[1]])
+	return (projected_budgets_balance [[1]])
 }
 
 
-# Obtiene el gasto real derivado de las estimaciones realizadas para un mes y un año determinados.
+# Gets the total amount of actual expenses linked to budgets for a given bugdet summary.
 #
-# @param estimation_table Tabla de estimaciones para un mes y un año determinados.
+# @param budget_summary Budget summary.
 #
-# @returns Balance de cuentas (es decir, saldo final) de los gastos reales asociados a las estimaciones para un mes y año determinados.
-get_estimation_real_balance <- function (estimation_table) {
-	estimation_real_balance <- filter (estimation_table, Cerrado == TRUE) %>%
-		summarize (sum (Importe.Real, na.rm = TRUE))
+# @returns Final balance for the actual expenses linked to budgets in the budget summary.
+get_actual_budgets_balance <- function (budget_summary) {
+	actual_budgets_balance <- filter (budget_summary, Is.Closed == TRUE) %>%
+		summarize (sum (Actual.Amount, na.rm = TRUE))
 
-	return (estimation_real_balance [[1]])
+	return (actual_budgets_balance [[1]])
 }
 
 
-# Obtiene el balance de cuentas reales para un mes y año determinados.
-# En caso de no especificarse mes o año, se considerarán el mes y año actuales.
+# Gets the account balance (incomes minus expenses) for a given month and year.
+# The calculations take into account the projected budgets and the expenses linked to these budgets.
 #
-# @param expenses _Data frame_ con la lista de gastos obtenida de Google Spreadsheets.
-# @param month Mes para el cual se desea obtener el balance (por defecto, el mes actual).
-# @param year Año para el cual se desea obtener el balance (por defecto, el año actual).
+# @param expenses Incomes/expenses data.
+# @param month Month to get the account balance (current month by default).
+# @param year Year to get the account balance (current year by default).
 #
-# @returns Balance real de cuentas para el mes y año especificados.
+# @returns Account balance for the given month and year.
 get_actual_balance <- function (expenses, month = NA, year = NA) {
-	# Si no se especifica mes o año, tomamos el mes y año actual para el filtrado.
+	# If month and year are not specified, the current date is used.
 	if (is.na (month) || is.na (year)) {
-		month <- as.numeric (format (Sys.Date ( ), "%m"))
-		year <- as.numeric (format (Sys.Date ( ), "%Y"))
+		month <- get_current_month ( )
+		year <- get_current_year ( )
 	}
 
-	estimation_table <- get_estimation_table (expenses, month, year)
-	estimation_expected_balance <- get_estimation_expected_balance (estimation_table)
-	estimation_real_balance <- get_estimation_real_balance (estimation_table)
+	# Gets the projected and actual budgets balance to adjust the account balance.
+	budget_summary <- get_budget_summary (expenses, month, year)
+	projected_budgets_balance <- get_projected_budgets_balance (budget_summary)
+	actual_budgets_balance <- get_actual_budgets_balance (budget_summary)
 
+	# Summarizes the expenses data using the budgets to adjust the account balance.
 	actual_balance <- expenses %>%
-		filter (Estimado == FALSE, is.na (Referencia), Mes == month, Año == year) %>%
-		summarize (Balance = sum (Importe, na.rm = TRUE) + estimation_expected_balance + estimation_real_balance)
+		filter (Is.Budget == FALSE, is.na (Reference), Month == month, Year == year) %>%
+		summarize (Balance = sum (Amount, na.rm = TRUE) + projected_budgets_balance + actual_budgets_balance)
 
 	return (actual_balance [[1]])
 }
 
 
-# Cálculos automáticos para el mes en curso.
-estimation_table <- get_estimation_table (expenses_data)
+# Automatic calculations for the current month and year.
+budget_summary <- get_budget_summary (expenses_data)
 actual_balance <- get_actual_balance (expenses_data)

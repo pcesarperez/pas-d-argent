@@ -1,14 +1,18 @@
 # init.R
-# Elementos auxiliares que deben cargarse al inicio de todos los _scripts_.
-
-
-# Constantes.
+# RHomeEconomy 0.8
 #
-# * `DEVTOOLS_PACKAGE`: Nombre del paquete `devtools`, necesario para cargar el paquete `googlesheets`.
-# * `GSHEETS_REPO`: Identificador del repositorio GitHub con el paquete `googlesheets`.
-# * `GSHEETS_PACKAGE`: Nombre del paquete `googlesheets`.
-# * `DPLYR_PACKAGE`: Nombre del paquete `dplyr`.
-# * `EXPENSES_SHEET_NAME`: Nombre de la hoja de gastos e ingresos.
+# This is a personal project to manage my home economy using Google Spreadsheets and R scripts.
+#
+# Initial loading script.
+
+
+# Constants.
+#
+# * `DEVTOOLS_PACKAGE`: Name of the package `devtools`, needed to load the package `googlesheets`.
+# * `GSHEETS_REPO`: Github repo identifier for the package `googlesheets`.
+# * `GSHEETS_PACKAGE`: Name of the package `googlesheets`.
+# * `DPLYR_PACKAGE`: Name of the package `dplyr`.
+# * `EXPENSES_SHEET_NAME`: Name of the base data sheet with incomes and expenses.
 DEVTOOLS_PACKAGE <- "devtools"
 GSHEETS_REPO <- "jennybc/googlesheets"
 GSHEETS_PACKAGE <- "googlesheets"
@@ -16,11 +20,11 @@ DPLYR_PACKAGE <- "dplyr"
 EXPENSES_SHEET_NAME <- "GastosIngresos"
 
 
-# Carga una biblioteca de funciones en memoria.
-# Si el paquete no está instalado, intenta instalarlo primero.
+# Loads a library into the workspace.
+# If the library is not installed, it tries to install it first.
 #
-# @param package.name Nombre de la biblioteca a cargar.
-load_package <- function (package.name) {
+# @param package.name Name of the library to load (empty string by default).
+load_package <- function (package.name = "") {
 	if (package.name != "") {
 		if (!package.name %in% installed.packages ( )) {
 			install.packages (package.name)
@@ -31,12 +35,11 @@ load_package <- function (package.name) {
 }
 
 
-# Carga una biblioteca de funciones en memoria.
-# La biblioteca de funciones está en GitHub (probablemente en desarrollo).
+# Loads a library hosted in GitHub into the workspace.
 #
-# @param repo.name Nombre del repositorio GitHub donde se encuentra la biblioteca.
-# @param package.name Nombre de la biblioteca a cargar.
-load_package_github <- function (repo.name, package.name) {
+# @param repo.name Name of the GitHub repo where the library is located (empty string by default).
+# @param package.name Name of the library to load (empty string by default).
+load_package_github <- function (repo.name = "", package.name = "") {
 	if ((repo.name != "") && (package.name != "")) {
 		if (!package.name %in% installed.packages ( )) {
 			devtools::install_github (repo.name)
@@ -47,21 +50,22 @@ load_package_github <- function (repo.name, package.name) {
 }
 
 
-# Carga de la hoja de cálculo con gastos e ingresos.
+# Registers the base data sheet with incomes and expenses.
+# The sheet is registered as is, with no further modifications.
 #
-# @returns Hoja de cálculo de Google Spreadsheets de gastos e ingresos.
+# @returns Reference to the base data sheet with incomes and expenses, loaded from Google Drive.
 load_expenses_sheet <- function ( ) {
 	return (register_ss (EXPENSES_SHEET_NAME, verbose = FALSE))
 }
 
 
-# Crea un conversor de elementos de tipo `character` a elementos de tipo `money`.
-# En esencia:
+# Creates a handler to convert items of type `character` in items of type `money`.
+# The handler does the following:
 #
-# * Elimina el símbolo de euro (€) de la cadena de entrada.
-# * Elimina el separador de miles (.) de la cadena de entrada.
-# * Sustituye el separador decimal (,) por otro separador decimal (.).
-create_money_converter <- function ( ) {
+# * Removes the euro symbol (€) from the input string.
+# * Removes the thousands separator (.) from the input string.
+# * Replaces the comma decimal separator (,) by the dot decimal separator (.).
+create_character_to_money_handler <- function ( ) {
 	setClass ("money")
 	setAs (
 		"character",
@@ -73,8 +77,8 @@ create_money_converter <- function ( ) {
 }
 
 
-# Crea un conversor de elementos de tipo carácter, con valores «Sí»/«No»/«» a elementos lógicos.
-create_yesno_converter <- function ( ) {
+# Creates a handler to convert items of type `character` with "Sí"/"No" values ("Yes"/"No" in Spanish) to logical values.
+create_character_to_yesno_handler <- function ( ) {
 	setClass ("yesno")
 	setAs (
 		"character",
@@ -86,8 +90,8 @@ create_yesno_converter <- function ( ) {
 }
 
 
-# Crea un conversor de elementos de tipo `character` a un formato específico de fecha `POSIXct`.
-create_date_converter <- function ( ) {
+# Creates a handler to convert items of type `character` to a `POSIXct` date with "%d/%m/%Y" format.
+create_character_to_posixct_converter <- function ( ) {
 	setClass ("pdate")
 	setAs (
 		"character",
@@ -99,57 +103,99 @@ create_date_converter <- function ( ) {
 }
 
 
-# Determina si una fecha determinada se encuentra en el pasado.
-# La fecha se considera en el pasado a partir del mes anterior.
+# Defines if a given date is in the past.
+# A date is considered to be in the past if it belongs to the previous month.
 #
-# @param date Fecha para la que se desea averiguar si está en el pasado.
+# @param date Date to check.
 #
-# @returns `TRUE` si la fecha es del mes pasado o anterior, o `FALSE` en caso contrario.
-belongs_to_the_past <- function (date) {
+# @returns `TRUE` if the date belongs to the previous month or before; `FALSE` otherwise.
+date_belongs_to_the_past <- function (date) {
 	return (format (date, "%Y%m") < format (Sys.Date ( ), "%Y%m"))
 }
 
 
-# Determina si un gasto estimado se encuentra en el pasdado.
-# Los gastos estimados en el pasado se consideran cerrados de forma automática.
+# Defines if an estimated expense (budget) belongs to the past.
 #
-# @param estimated Valor lógico de la columna `Estimado` que indica si el gasto es una estimación.
-# @param date Fecha en la que se produjo el gasto.
+# @param is_budget Logical value of the `Is.Budget` column, stating if the expense is an estimation (budget).
+# @param date Date of the expense.
 #
-# @returns `TRUE` si el gasto es estimado y se encuentra en el pasado, o `FALSE` en caso contrario.
-estimation_is_in_the_past <- function (estimated, date) {
-	return (belongs_to_the_past (date) & estimated)
+# @returns `TRUE` if the expense is an estimation and belongs to the past; `FALSE` otherwise.
+budget_belongs_to_the_past <- function (is_budget, date) {
+	return (date_belongs_to_the_past (date) & is_budget)
 }
 
 
-# Determina si un gasto estimado del presente mes ha sido consumido.
-# Los gastos estimados presentes consumidos se consideran cerrados de forma automática.
+# Defines if an estimated expense (budget) in the current month has been consumed.
 #
-# @param estimated Valor lógico de la columna `Estimado` que indica si el gasto es una estimación.
-# @param closed Valor lógico de la columna `Cerrado` que indica si el gasto estimado se ha cerrado de forma manual.
-# @param date Fecha en la que se produjo el gasto.
-# @param amount Importe de la estimación realizada.
-# @param consumed Importe consumido sobre la estimación realizada.
+# @param is_budget Logical value of the `Is.Budget` column, stating if the expense is an estimation (budget).
+# @param date Date of the budget.
+# @param amount Budget amount.
+# @param budget_consumed Budget consumed.
 #
-# @returns `TRUE` si el gasto es estimado, no cerrado, en el presente y el consumo supera a la estimación; `FALSE` en caso contrario.
-estimation_is_current_and_consumed <- function (estimated, closed, date, amount, consumed) {
-	return (!belongs_to_the_past (date) & estimated & !is.na (consumed) & abs (amount) <= abs (consumed))
+# @returns `TRUE` if the expense is a budget in the current month, and the budget consumed exceeds the estimation; `FALSE` otherwise.
+budget_is_current_and_consumed <- function (is_budget, date, amount, budget_consumed) {
+	return (!date_belongs_to_the_past (date) & is_budget & !is.na (budget_consumed) & (abs (amount) <= abs (budget_consumed)))
 }
 
 
-# Obtención del _data frame_ con los datos efectivos.
-# El _data frame_ se empaqueta en un objeto de tipo `tbl_df` de `dplyr` para su manejo.
+# Defines if an estimated expense (budget) should be automatically closed.
+# A budget should be closed in one of these cases:
 #
-# @param expenses_sheet Hoja de cC!lculo de Google Spreadsheets de gastos e ingresos.
+# * The budget belongs to a month in the past.
+# * The budget belongs to the current month, but has been consumed (the real expenses exceeds the budget amount).
 #
-# @returns Objeto de tipo `tbl_df` con los datos de gastos e ingresos.
-get_expenses_data <- function (expenses_sheet) {
-	create_money_converter ( )
-	create_date_converter ( )
-	create_yesno_converter ( )
+# @param is_budget Logical value of the `Is.Budget` column, stating if the expense is an estimation (budget).
+# @param date Date of the budget.
+# @param amount Budget amount.
+# @param budget_consumed Budget consumed.
+#
+# @returns `TRUE` if the expense is a budget which meets the conditions to be closed; `FALSE` otherwise.
+budget_should_be_closed <- function (is_budget, date, amount, budget_consumed) {
+	return (budget_belongs_to_the_past (is_budget, date) | budget_is_current_and_consumed (is_budget, date, amount, budget_consumed))
+}
 
+
+# Gets the month from a given date.
+#
+# @param date Date to get the month from.
+#
+# @returns Factor from the numeric representation of the month in the date.
+get_month_from_date <- function (date) {
+	return (as.factor (as.numeric (format (date, "%m"))))
+}
+
+
+# Gets the year from a given date.
+#
+# @param date Date to get the year from.
+#
+# @returns Factor from the numeric representation of the year in the date.
+get_year_from_date <- function (date) {
+	return (as.factor (as.numeric (format (date, "%Y"))))
+}
+
+
+# Creates the data frame with the incomes/expenses data.
+# The data frame goes through several transformations:
+#
+# * The column names are translated into English (the original sheet is in Spanish).
+# * A new `Month` column is added, to help in filtering the data frame.
+# * A new `Year` column is added, to help in filtering the data frame.
+# * Every estimated expense in the past is automatically closed.
+# * Every estimated expense in the current month which has been consumed is automatically closed.
+#
+# @param expenses_reference Reference to the base data sheet with incomes and expenses.
+#
+# @returns A `tbl_df` data frame with the incomes/expenses data.
+get_expenses_data <- function (expenses_reference) {
+	# Creates the handlers to read the sheet with the correct data types.
+	create_character_to_money_handler ( )
+	create_character_to_yesno_handler ( )
+	create_character_to_posixct_converter ( )
+
+	# Loads the sheet from Google Spreadsheets.
 	expenses_data <- get_via_csv (
-		expenses_sheet,
+		expenses_reference,
 		header = TRUE,
 		verbose = FALSE,
 		colClasses = c (
@@ -161,52 +207,48 @@ get_expenses_data <- function (expenses_sheet) {
 			Importe = "money",
 			Referencia = "numeric",
 			Observaciones = "character"
+		),
+		col.names = c (
+			"Id",
+			"Date",
+			"Is.Budget",
+			"Is.Closed",
+			"Type",
+			"Amount",
+			"Reference",
+			"Comments"
 		)
 	)
 
-	# Añadimos dos columnas adicionales para mes y año.
+	# Adds the `Month` and `Year` columns.
 	expenses_data <- mutate (
 		expenses_data,
-		Mes = as.factor (as.numeric (format (Fecha, "%m"))),
-		Año = as.factor (as.numeric (format (Fecha, "%Y")))
+		Month = get_month_from_date (Date),
+		Year = get_year_from_date (Date)
 	)
 
-	# Ajustamos la columna `Cerrado` para cerrar automáticamente las estimaciones en estos dos casos:
+	# Closes automatically the budgets if they fall into one of these cases:
 	#
-	# * La estimación pertenece a un mes en el pasado.
-	# * La estimación es del mes actual, pero el gasto real supera al gasto estimado.
-	real_expenses_per_estimation <- expenses_data %>% group_by (Referencia) %>% summarise (Consumido = sum (Importe))
-	expenses_data <- left_join (expenses_data, real_expenses_per_estimation, by = c ("Id" = "Referencia"))
+	# * The budget belongs to a month in the past.
+	# * The budget belongs to the current month, but has been consumed (the real expenses exceeds the budget amount).
+	real_expenses_per_budget <- expenses_data %>% group_by (Reference) %>% summarise (Budget.Consumed = sum (Amount))
+	expenses_data <- left_join (expenses_data, real_expenses_per_budget, by = c ("Id" = "Reference"))
 	expenses_data <- mutate (
 		expenses_data,
-		Cerrado = ifelse (
-			estimation_is_in_the_past (Estimado, Fecha) | estimation_is_current_and_consumed (Estimado, Cerrado, Fecha, Importe, Consumido),
+		Is.Closed = ifelse (
+			budget_should_be_closed (Is.Budget, Date, Amount, Budget.Consumed),
 			TRUE,
 			FALSE
 		)
 	) %>%
-		select (Id, Fecha, Mes, Año, Estimado, Cerrado, Tipo, Importe, Referencia, Observaciones)
+		select (Id, Date, Month, Year, Is.Budget, Is.Closed, Type, Amount, Reference, Comments)
 
 	return (tbl_df (expenses_data))
 }
 
 
-# Protocolo de inicialización.
+# Initialization protocol.
 load_package (DEVTOOLS_PACKAGE)
 load_package_github (GSHEETS_REPO, GSHEETS_PACKAGE)
 load_package (DPLYR_PACKAGE)
 expenses_data <- get_expenses_data (load_expenses_sheet ( ))
-
-# Protocolo de limpieza.
-rm (list = c (
-	"create_date_converter",
-	"create_yesno_converter",
-	"create_money_converter",
-	"get_expenses_data",
-	"load_expenses_sheet",
-	"load_package",
-	"load_package_github",
-	"belongs_to_the_past",
-	"estimation_is_current_and_consumed",
-	"estimation_is_in_the_past"
-))
