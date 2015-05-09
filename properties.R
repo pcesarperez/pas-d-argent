@@ -4,6 +4,7 @@
 # This is a personal project to manage my home economy using Google Spreadsheets and R scripts.
 #
 # Functions to read properties from a file.
+# Source of wisdom: http://stackoverflow.com/questions/13681310/reading-configuration-from-text-file
 
 
 # Gets a set of properties (key/value pairs) from a properties file.
