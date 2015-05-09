@@ -89,13 +89,13 @@ get_actual_balance <- function (expenses, month = NA, year = NA) {
 		year <- as.numeric (format (Sys.Date ( ), "%Y"))
 	}
 
-	estimated_table <- get_estimated_table (expenses, month, year)
-	estimated_expenses <- get_estimated_expenses (estimated_table)
-	adjusted_expenses <- get_adjusted_expenses (estimated_table)
+	estimation_table <- get_estimation_table (expenses, month, year)
+	estimation_expected_balance <- get_estimation_expected_balance (estimation_table)
+	estimation_real_balance <- get_estimation_real_balance (estimation_table)
 
 	actual_balance <- expenses %>%
 		filter (Estimado == FALSE, is.na (Referencia), Mes == month, Año == year) %>%
-		summarize (Balance = sum (Importe, na.rm = TRUE) + estimated_expenses - adjusted_expenses)
+		summarize (Balance = sum (Importe, na.rm = TRUE) + estimation_expected_balance + estimation_real_balance)
 
 	return (actual_balance)
 }

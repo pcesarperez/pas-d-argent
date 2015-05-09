@@ -110,6 +110,33 @@ belongs_to_the_past <- function (date) {
 }
 
 
+# Determina si un gasto estimado se encuentra en el pasdado.
+# Los gastos estimados en el pasado se consideran cerrados de forma automática.
+#
+# @param estimated Valor lógico de la columna `Estimado` que indica si el gasto es una estimación.
+# @param date Fecha en la que se produjo el gasto.
+#
+# @returns `TRUE` si el gasto es estimado y se encuentra en el pasado, o `FALSE` en caso contrario.
+estimation_is_in_the_past <- function (estimated, date) {
+	return (belongs_to_the_past (date) & estimated)
+}
+
+
+# Determina si un gasto estimado del presente mes ha sido consumido.
+# Los gastos estimados presentes consumidos se consideran cerrados de forma automática.
+#
+# @param estimated Valor lógico de la columna `Estimado` que indica si el gasto es una estimación.
+# @param closed Valor lógico de la columna `Cerrado` que indica si el gasto estimado se ha cerrado de forma manual.
+# @param date Fecha en la que se produjo el gasto.
+# @param amount Importe de la estimación realizada.
+# @param consumed Importe consumido sobre la estimación realizada.
+#
+# @returns `TRUE` si el gasto es estimado, no cerrado, en el presente y el consumo supera a la estimación; `FALSE` en caso contrario.
+estimation_is_current_and_consumed <- function (estimated, closed, date, amount, consumed) {
+	return (!belongs_to_the_past (date) & estimated & !is.na (consumed) & abs (amount) <= abs (consumed))
+}
+
+
 # Obtención del _data frame_ con los datos efectivos.
 # El _data frame_ se empaqueta en un objeto de tipo `tbl_df` de `dplyr` para su manejo.
 #
@@ -153,7 +180,7 @@ get_expenses_data <- function (expenses_sheet) {
 	csv_expenses <- mutate (
 		csv_expenses,
 		Cerrado = ifelse (
-			(Estimado == TRUE & Cerrado == FALSE & belongs_to_the_past (Fecha)) | (!belongs_to_the_past (Fecha) & Estimado == TRUE & !is.na (Consumido) & abs (Importe) <= abs (Consumido)),
+			estimation_is_in_the_past (Estimado, Fecha) | estimation_is_current_and_consumed (Estimado, Cerrado, Fecha, Importe, Consumido),
 			TRUE,
 			FALSE
 		)
