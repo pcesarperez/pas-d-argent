@@ -99,6 +99,17 @@ create_date_converter <- function ( ) {
 }
 
 
+# Determina si una fecha determinada se encuentra en el pasado.
+# La fecha se considera en el pasado a partir del mes anterior.
+#
+# @param date Fecha para la que se desea averiguar si está en el pasado.
+#
+# @returns `TRUE` si la fecha es del mes pasado o anterior, o `FALSE` en caso contrario.
+belongs_to_the_past <- function (date) {
+	return (format (date, "%Y%m") < format (Sys.Date ( ), "%Y%m"))
+}
+
+
 # Obtención del _data frame_ con los datos efectivos.
 # El _data frame_ se empaqueta en un objeto de tipo `tbl_df` de `dplyr` para su manejo.
 #
@@ -118,6 +129,7 @@ get_expenses_data <- function (expenses_sheet) {
 			Id = "numeric",
 			Fecha = "pdate",
 			Estimado = "yesno",
+			Cerrado = "yesno",
 			Tipo = "factor",
 			Importe = "money",
 			Referencia = "numeric",
@@ -125,12 +137,28 @@ get_expenses_data <- function (expenses_sheet) {
 		)
 	)
 
+	# Añadimos dos columnas adicionales para mes y año.
 	csv_expenses <- mutate (
 		csv_expenses,
 		Mes = as.factor (as.numeric (format (Fecha, "%m"))),
 		Año = as.factor (as.numeric (format (Fecha, "%Y")))
+	)
+
+	# Ajustamos la columna `Cerrado` para cerrar automáticamente las estimaciones en estos dos casos:
+	#
+	# * La estimación pertenece a un mes en el pasado.
+	# * La estimación es del mes actual, pero el gasto real supera al gasto estimado.
+	real_expenses_per_estimation <- csv_expenses %>% group_by (Referencia) %>% summarise (Consumido = sum (Importe))
+	csv_expenses <- left_join (csv_expenses, real_expenses_per_estimation, by = c ("Id" = "Referencia"))
+	csv_expenses <- mutate (
+		csv_expenses,
+		Cerrado = ifelse (
+			(Estimado == TRUE & Cerrado == FALSE & belongs_to_the_past (Fecha)) | (!belongs_to_the_past (Fecha) & Estimado == TRUE & !is.na (Consumido) & abs (Importe) <= abs (Consumido)),
+			TRUE,
+			FALSE
+		)
 	) %>%
-		select (Id, Fecha, Mes, Año, Estimado, Tipo, Importe, Referencia, Observaciones)
+		select (Id, Fecha, Mes, Año, Estimado, Cerrado, Tipo, Importe, Referencia, Observaciones)
 
 	return (tbl_df (csv_expenses))
 }
