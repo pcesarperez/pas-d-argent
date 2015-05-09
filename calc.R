@@ -154,4 +154,4 @@ get_actual_balance <- function (expenses, month = NA, year = NA) {
 
 # Automatic calculations for the current month and year.
 budget_summary <- get_budget_summary (expenses_data)
-actual_balance <- get_actual_balance (expenses_data)
+current_balance <- get_actual_balance (expenses_data)
