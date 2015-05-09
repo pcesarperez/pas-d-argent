@@ -97,5 +97,10 @@ get_actual_balance <- function (expenses, month = NA, year = NA) {
 		filter (Estimado == FALSE, is.na (Referencia), Mes == month, Año == year) %>%
 		summarize (Balance = sum (Importe, na.rm = TRUE) + estimation_expected_balance + estimation_real_balance)
 
-	return (actual_balance)
+	return (actual_balance [[1]])
 }
+
+
+# Cálculos automáticos para el mes en curso.
+estimation_table <- get_estimation_table (expenses_data)
+actual_balance <- get_actual_balance (expenses_data)

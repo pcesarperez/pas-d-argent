@@ -148,7 +148,7 @@ get_expenses_data <- function (expenses_sheet) {
 	create_date_converter ( )
 	create_yesno_converter ( )
 
-	csv_expenses <- get_via_csv (
+	expenses_data <- get_via_csv (
 		expenses_sheet,
 		header = TRUE,
 		verbose = FALSE,
@@ -165,8 +165,8 @@ get_expenses_data <- function (expenses_sheet) {
 	)
 
 	# Añadimos dos columnas adicionales para mes y año.
-	csv_expenses <- mutate (
-		csv_expenses,
+	expenses_data <- mutate (
+		expenses_data,
 		Mes = as.factor (as.numeric (format (Fecha, "%m"))),
 		Año = as.factor (as.numeric (format (Fecha, "%Y")))
 	)
@@ -175,10 +175,10 @@ get_expenses_data <- function (expenses_sheet) {
 	#
 	# * La estimación pertenece a un mes en el pasado.
 	# * La estimación es del mes actual, pero el gasto real supera al gasto estimado.
-	real_expenses_per_estimation <- csv_expenses %>% group_by (Referencia) %>% summarise (Consumido = sum (Importe))
-	csv_expenses <- left_join (csv_expenses, real_expenses_per_estimation, by = c ("Id" = "Referencia"))
-	csv_expenses <- mutate (
-		csv_expenses,
+	real_expenses_per_estimation <- expenses_data %>% group_by (Referencia) %>% summarise (Consumido = sum (Importe))
+	expenses_data <- left_join (expenses_data, real_expenses_per_estimation, by = c ("Id" = "Referencia"))
+	expenses_data <- mutate (
+		expenses_data,
 		Cerrado = ifelse (
 			estimation_is_in_the_past (Estimado, Fecha) | estimation_is_current_and_consumed (Estimado, Cerrado, Fecha, Importe, Consumido),
 			TRUE,
@@ -187,7 +187,7 @@ get_expenses_data <- function (expenses_sheet) {
 	) %>%
 		select (Id, Fecha, Mes, Año, Estimado, Cerrado, Tipo, Importe, Referencia, Observaciones)
 
-	return (tbl_df (csv_expenses))
+	return (tbl_df (expenses_data))
 }
 
 
@@ -205,5 +205,8 @@ rm (list = c (
 	"get_expenses_data",
 	"load_expenses_sheet",
 	"load_package",
-	"load_package_github"
+	"load_package_github",
+	"belongs_to_the_past",
+	"estimation_is_current_and_consumed",
+	"estimation_is_in_the_past"
 ))
