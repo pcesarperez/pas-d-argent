@@ -6,14 +6,14 @@
 # Specific calculations over the data containing incomes and expenses.
 
 
-# Initialization.
+# Modules.
 source.with.encoding ("init.R", encoding = "UTF-8")
 
 
 # Gets the current month.
 #
 # @returns The current month in numeric format.
-get_current_month <- function ( ) {
+get.current.month <- function ( ) {
 	return (as.numeric (format (Sys.Date ( ), "%m")))
 }
 
@@ -21,7 +21,7 @@ get_current_month <- function ( ) {
 # Gets the current year.
 #
 # @returns The current year in numeric format.
-get_current_year <- function ( ) {
+get.current.year <- function ( ) {
 	return (as.numeric (format (Sys.Date ( ), "%Y")))
 }
 
@@ -33,12 +33,12 @@ get_current_year <- function ( ) {
 # @param year Year to filter the budget projections.
 #
 # @returns A table with the budget projections for the given month and year.
-get_budget_projections <- function (expenses, month, year) {
-	budget_projections <- expenses %>%
+get.budget.projections <- function (expenses, month, year) {
+	budget.projections <- expenses %>%
 		filter (Is.Budget == TRUE, Month == month, Year == year) %>%
 		select (Id, Date, Type, Is.Closed, Projected.Amount = Amount, Comments)
 
-	return (budget_projections)
+	return (budget.projections)
 }
 
 
@@ -49,13 +49,13 @@ get_budget_projections <- function (expenses, month, year) {
 # @param year Year to filter the budget consumption
 #
 # @returns A table with the budget consumption for the given month and year.
-get_budget_consumption <- function (expenses, month, year) {
-	budget_consumption <- expenses %>%
+get.budget.consumption <- function (expenses, month, year) {
+	budget.consumption <- expenses %>%
 		filter (complete.cases (Reference), Month == month, Year == year) %>%
 		group_by (Reference) %>%
 		summarize (Actual.Amount = sum (Amount))
 
-	return (budget_consumption)
+	return (budget.consumption)
 }
 
 
@@ -75,51 +75,51 @@ get_budget_consumption <- function (expenses, month, year) {
 # * `Actual.Amount`: Actual amount consumed in the budget.
 # * `Balance`: Difference between projected and actual amount of the budget.
 # * `Comments`: Comments of the budget.
-get_budget_summary <- function (expenses, month = NA, year = NA) {
+get.budget.summary <- function (expenses, month = NA, year = NA) {
 	# If month and year are not specified, the current date is used.
 	if (is.na (month) || is.na (year)) {
-		month <- get_current_month ( )
-		year <- get_current_year ( )
+		month <- get.current.month ( )
+		year <- get.current.year ( )
 	}
 
 	# Filters out a data frame with the budget expenses.
-	budget_projections <- get_budget_projections (expenses, month, year)
+	budget.projections <- get.budget.projections (expenses, month, year)
 
 	# Filters out a data frame with the expenses related to each declared budget.
-	budget_consumption <- get_budget_consumption (expenses, month, year)
+	budget.consumption <- get.budget.consumption (expenses, month, year)
 
 	# Joins the two data frames to obtain the budget summary.
-	budget_summary <- left_join (budget_projections, budget_consumption, by = c ("Id" = "Reference")) %>%
+	budget.summary <- left_join (budget.projections, budget.consumption, by = c ("Id" = "Reference")) %>%
 		mutate (Balance = Actual.Amount - Projected.Amount) %>%
 		select (Id, Date, Type, Is.Closed, Projected.Amount, Actual.Amount, Balance, Comments)
 
-	return (budget_summary)
+	return (budget.summary)
 }
 
 
 # Gets the total amount of projected and not closed budgets for a given budget summary.
 #
-# @param budget_summary Budget summary.
+# @param budget.summary Budget summary.
 #
 # @returns Final balance for the projected budgets in the budget summary.
-get_projected_budgets_balance <- function (budget_summary) {
-	projected_budgets_balance <- filter (budget_summary, Is.Closed == FALSE) %>%
+get.projected.budgets.balance <- function (budget.summary) {
+	projected.budgets.balance <- filter (budget.summary, Is.Closed == FALSE) %>%
 		summarize (sum (Projected.Amount, na.rm = TRUE))
 
-	return (projected_budgets_balance [[1]])
+	return (projected.budgets.balance [[1]])
 }
 
 
 # Gets the total amount of actual expenses linked to budgets for a given bugdet summary.
 #
-# @param budget_summary Budget summary.
+# @param budget.summary Budget summary.
 #
 # @returns Final balance for the actual expenses linked to budgets in the budget summary.
-get_actual_budgets_balance <- function (budget_summary) {
-	actual_budgets_balance <- filter (budget_summary, Is.Closed == TRUE) %>%
+get.actual.budgets.balance <- function (budget.summary) {
+	actual.budgets.balance <- filter (budget.summary, Is.Closed == TRUE) %>%
 		summarize (sum (Actual.Amount, na.rm = TRUE))
 
-	return (actual_budgets_balance [[1]])
+	return (actual.budgets.balance [[1]])
 }
 
 
@@ -131,27 +131,27 @@ get_actual_budgets_balance <- function (budget_summary) {
 # @param year Year to get the account balance (current year by default).
 #
 # @returns Account balance for the given month and year.
-get_actual_balance <- function (expenses, month = NA, year = NA) {
+get.actual.balance <- function (expenses, month = NA, year = NA) {
 	# If month and year are not specified, the current date is used.
 	if (is.na (month) || is.na (year)) {
-		month <- get_current_month ( )
-		year <- get_current_year ( )
+		month <- get.current.month ( )
+		year <- get.current.year ( )
 	}
 
 	# Gets the projected and actual budgets balance to adjust the account balance.
-	budget_summary <- get_budget_summary (expenses, month, year)
-	projected_budgets_balance <- get_projected_budgets_balance (budget_summary)
-	actual_budgets_balance <- get_actual_budgets_balance (budget_summary)
+	budget.summary <- get.budget.summary (expenses, month, year)
+	projected.budgets.balance <- get.projected.budgets.balance (budget.summary)
+	actual.budgets.balance <- get.actual.budgets.balance (budget.summary)
 
 	# Summarizes the expenses data using the budgets to adjust the account balance.
-	actual_balance <- expenses %>%
+	actual.balance <- expenses %>%
 		filter (Is.Budget == FALSE, is.na (Reference), Month == month, Year == year) %>%
-		summarize (Balance = sum (Amount, na.rm = TRUE) + projected_budgets_balance + actual_budgets_balance)
+		summarize (Balance = sum (Amount, na.rm = TRUE) + projected.budgets.balance + actual.budgets.balance)
 
-	return (actual_balance [[1]])
+	return (actual.balance [[1]])
 }
 
 
 # Automatic calculations for the current month and year.
-budget_summary <- get_budget_summary (expenses_data)
-current_balance <- get_actual_balance (expenses_data)
+current.budget.summary <- get.budget.summary (expenses.data)
+current.balance <- get.actual.balance (expenses.data)
