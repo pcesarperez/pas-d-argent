@@ -1,5 +1,5 @@
 # packages.R
-# RHomeEconomy 0.8
+# Pas d'argent 0.8
 #
 # This is a personal project to manage my home economy using Google Spreadsheets and R scripts.
 #
