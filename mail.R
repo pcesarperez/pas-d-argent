@@ -43,39 +43,63 @@ get_daily_message_body <- function (msg_body, current_balance) {
 
 
 # Properties setup.
-SENDER <- as.character (properties ["sender"])
-RECIPIENTS <- unlist (strsplit (properties ["recipients"], ",[ ]*"), use.names = FALSE)
-MSG_SUBJECT <- get_daily_message_subject (as.character (properties ["msg.subject"]))
-MSG_BODY <- get_daily_message_body (as.character (properties ["msg.body"]), current_balance)
-MSG_ENCODING <- as.character (properties ["msg.encoding"])
-SMTP_SERVER <- as.character (properties ["smtp.server"])
-SMTP_PORT <- as.numeric (properties ["smtp.port"])
-USER_NAME <- as.character (properties ["user.name"])
-USER_PASSWORD <- as.character (properties ["user.password"])
+sender <- get_character_property (properties, "sender")
+recipients <- get_multipart_property (properties, "recipients")
+msg_subject <- get_daily_message_subject (get_character_property (properties, "msg.subject"))
+msg_body <- get_daily_message_body (get_character_property (properties, "msg.body"), current_balance)
+msg_encoding <- get_character_property (properties, "msg.encoding")
+smtp_server <- get_character_property (properties, "smtp.server")
+smtp_port <- get_numeric_property (properties, "smtp.port")
+user_name <- get_character_property (properties, "user.name")
+user_password <- get_character_property (properties, "user.password")
 
 
-# Sends an email with the current account balance.
+# Sends an email with the specified parameters.
 #
-# @param current_balance Account balance to date.
-send_current_balance_email <- function (current_balance) {
+# @param sender Sender email address.
+# @param recipients List of comma separated email addresses of the report recipients.
+# @param msg_subject Email subject.
+# @param msg_body Email body..
+# @param msg_encoding Email encoding.
+# @param smtp_server SMTP server used to send the email.
+# @param smtp_port Port of the SMTP server used to send the email.
+# @param user_name Username used for authentication in the SMTP server.
+# @param user_password Password used for authentication in the SMTP server.
+send_balance_email <- function (sender, recipients, msg_subject, msg_body, msg_encoding, smtp_server, smtp_port, user_name, user_password) {
 	send.mail (
-		from = SENDER,
-		to = RECIPIENTS,
-		subject = MSG_SUBJECT,
-		body = MSG_BODY,
-		encoding = MSG_ENCODING,
+		from = sender,
+		to = recipients,
+		subject = msg_subject,
+		body = msg_body,
+		encoding = msg_encoding,
 		html = TRUE,
 		inline = FALSE,
 		smtp = list (
-			host.name = SMTP_SERVER,
-			port = SMTP_PORT,
+			host.name = smtp_server,
+			port = smtp_port,
 			ssl = TRUE,
-			user.name = USER_NAME,
-			passwd = USER_PASSWORD
+			user.name = user_name,
+			passwd = user_password
 		),
 		authenticate = TRUE,
 		send = TRUE,
 		attach.files = NULL,
 		debug = FALSE
+	)
+}
+
+
+# Sends and email with the current balance in the message body.
+send_current_balance_email <- function ( ) {
+	send_balance_email (
+		sender,
+		recipients,
+		msg_subject,
+		msg_body,
+		msg_encoding,
+		smtp_server,
+		smtp_port,
+		user_name,
+		user_password
 	)
 }

@@ -28,3 +28,37 @@ get_properties_from_file <- function (path.to.file) {
 
 	return (properties)
 }
+
+
+# Gets a property value with `character` format.
+#
+# @param properties Named vector with key/value property pairs.
+# @param key Property key.
+#
+# @returns Property value with `character` format.
+get_character_property <- function (properties, key) {
+	return (as.character (properties [key]))
+}
+
+
+# Gets a property value with `numeric` format.
+#
+# @param properties Named vector with key/value property pairs.
+# @param key Property key.
+#
+# @returns Property value with `numeric` format.
+get_numeric_property <- function (properties, key) {
+	return (as.numeric (properties [key]))
+}
+
+
+# Gets a property value as a character vector.
+# The property value should be comma separated values.
+#
+# @param properties Named vector with key/value property pairs.
+# @param key Property key.
+#
+# @returns Property value as a character vector.
+get_multipart_property <- function (properties, key) {
+	return (unlist (strsplit (properties [key], ",[ ]*"), use.names = FALSE))
+}
