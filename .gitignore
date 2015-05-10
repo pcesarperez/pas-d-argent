@@ -2,5 +2,4 @@
 .RData
 .Rhistory
 
-foo.R
-mail_test.R
+mail.properties

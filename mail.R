@@ -68,7 +68,7 @@ send_current_balance_email <- function (current_balance) {
 		inline = FALSE,
 		smtp = list (
 			host.name = SMTP_SERVER,
-			port = as.numeric (SMTP_PORT),
+			port = SMTP_PORT,
 			ssl = TRUE,
 			user.name = USER_NAME,
 			passwd = USER_PASSWORD
