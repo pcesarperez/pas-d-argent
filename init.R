@@ -43,7 +43,7 @@ load.expenses.sheet <- function ( ) {
 # Creates a handler to convert items of type `character` in items of type `money`.
 # The handler does the following:
 #
-# * Removes the currency symbol (VALUE.CURRENCY) from the input string.
+# * Removes the currency symbol (`VALUE.CURRENCY`) from the input string.
 # * Removes the thousands separator (.) from the input string.
 # * Replaces the comma decimal separator (,) by the dot decimal separator (.).
 create.character.to.money.handler <- function ( ) {
@@ -84,7 +84,7 @@ create.character.to.yesno.handler <- function ( ) {
 
 
 # Creates a handler to convert items of type `character` to a `POSIXct` date with "%d/%m/%Y" format.
-create.character.to.posixct.converter <- function ( ) {
+create.character.to.posixct.handler <- function ( ) {
 	setClass ("pdate")
 	setAs (
 		"character",
@@ -104,6 +104,17 @@ create.character.to.posixct.converter <- function ( ) {
 # @returns `TRUE` if the date belongs to the previous month or before; `FALSE` otherwise.
 date.belongs.to.the.past <- function (date) {
 	return (format (date, "%Y%m") < format (Sys.Date ( ), "%Y%m"))
+}
+
+
+# Determines if an estimated expense (budget) is closed yet.
+#
+# @param is.budget Logical value of the `Is.Budget` column, stating if the expense is an estimation (budget).
+# @param is.closed Logical value of the `Is.Closed` column, stating if the expense has been manually closed.
+#
+# @returns `TRUE` if the expense is an estimation and has been closed; `FALSE` otherwise.
+budget.has.been.closed.yet <- function (is.budget, is.closed) {
+	return (is.budget & is.closed)
 }
 
 
@@ -134,6 +145,7 @@ budget.is.current.and.consumed <- function (is.budget, date, amount, budget.cons
 # Defines if an estimated expense (budget) should be automatically closed.
 # A budget should be closed in one of these cases:
 #
+# * The budget has been manually closed yet.
 # * The budget belongs to a month in the past.
 # * The budget belongs to the current month, but has been consumed (the real expenses exceeds the budget amount).
 #
@@ -143,8 +155,12 @@ budget.is.current.and.consumed <- function (is.budget, date, amount, budget.cons
 # @param budget.consumed Budget consumed.
 #
 # @returns `TRUE` if the expense is a budget which meets the conditions to be closed; `FALSE` otherwise.
-budget.should.be.closed <- function (is.budget, date, amount, budget.consumed) {
-	return (budget.belongs.to.the.past (is.budget, date) | budget.is.current.and.consumed (is.budget, date, amount, budget.consumed))
+budget.should.be.closed <- function (is.budget, is.closed, date, amount, budget.consumed) {
+	return (
+		budget.has.been.closed.yet (is.budget, is.closed) |
+		budget.belongs.to.the.past (is.budget, date) |
+		budget.is.current.and.consumed (is.budget, date, amount, budget.consumed)
+	)
 }
 
 
@@ -184,7 +200,7 @@ get.expenses.data <- function (expenses.reference) {
 	# Creates the handlers to read the sheet with the correct data types.
 	create.character.to.money.handler ( )
 	create.character.to.yesno.handler ( )
-	create.character.to.posixct.converter ( )
+	create.character.to.posixct.handler ( )
 
 	# Loads the sheet from Google Spreadsheets.
 	expenses.data <- get_via_csv (
@@ -229,7 +245,7 @@ get.expenses.data <- function (expenses.reference) {
 	expenses.data <- mutate (
 		expenses.data,
 		Is.Closed = ifelse (
-			budget.should.be.closed (Is.Budget, Date, Amount, Budget.Consumed),
+			budget.should.be.closed (Is.Budget, Is.Closed, Date, Amount, Budget.Consumed),
 			TRUE,
 			FALSE
 		)
