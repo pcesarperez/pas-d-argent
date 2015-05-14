@@ -36,7 +36,7 @@ VALUE.CURRENCY <- get.character.property (properties, "value.currency")
 #
 # @returns Reference to the specified base data sheet with incomes and expenses, loaded from Google Drive.
 load.expenses.sheet <- function ( ) {
-	return (register_ss (SHEET.NAME, verbose = FALSE))
+	return (gs_title (SHEET.NAME, verbose = FALSE))
 }
 
 

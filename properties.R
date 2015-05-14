@@ -22,6 +22,7 @@ get.properties.from.file <- function (path.to.file) {
 		strip.white = TRUE,
 		na.strings = "NA",
 		stringsAsFactors = FALSE,
+		encoding = "UTF-8"
 	)
 
 	properties <- setNames (properties [, 1], row.names (properties))
