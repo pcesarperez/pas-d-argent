@@ -41,7 +41,7 @@ get.daily.message.subject <- function (msg.subject) {
 #
 # @returns The message body with the current account balance.
 get.daily.message.body <- function (msg.body, current.balance) {
-	return (gsub (pattern = "%", msg.body, replacement = current.balance))
+	return (gsub (pattern = "%", msg.body, replacement = round (current.balance, digits = 2)))
 }
 
 
