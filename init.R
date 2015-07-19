@@ -11,32 +11,32 @@ source.with.encoding ("properties.R", encoding = "UTF-8")
 source.with.encoding ("packages.R", encoding = "UTF-8")
 
 # Initialization.
-load.package ("devtools")
-load.package.github ("jennybc/googlesheets", "googlesheets")
-load.package ("dplyr")
-properties <- get.properties.from.file ("sheet.properties")
+loadPackage ("devtools")
+loadPackageGithub ("jennybc/googlesheets", "googlesheets")
+loadPackage ("dplyr")
+properties <- getPropertiesFromFile ("sheet.properties")
 
 # Properties setup.
-SHEET.NAME <- get.character.property (properties, "sheet.name")
-COLUMN.ID <- get.character.property (properties, "column.id")
-COLUMN.DATE <- get.character.property (properties, "column.date")
-COLUMN.IS.BUDGET <- get.character.property (properties, "column.is.budget")
-COLUMN.IS.CLOSED <- get.character.property (properties, "column.is.closed")
-COLUMN.TYPE <- get.character.property (properties, "column.type")
-COLUMN.AMOUNT <- get.character.property (properties, "column.amount")
-COLUMN.REFERENCE <- get.character.property (properties, "column.reference")
-COLUMN.COMMENTS <- get.character.property (properties, "column.comments")
-VALUE.YES <- get.character.property (properties, "value.yes")
-VALUE.NO <- get.character.property (properties, "value.no")
-VALUE.CURRENCY <- get.character.property (properties, "value.currency")
+SHEET_NAME <- getCharacterProperty (properties, "sheet.name")
+COLUMN_ID <- getCharacterProperty (properties, "column.id")
+COLUMN_DATE <- getCharacterProperty (properties, "column.date")
+COLUMN_IS_BUDGET <- getCharacterProperty (properties, "column.is.budget")
+COLUMN_IS_CLOSED <- getCharacterProperty (properties, "column.is.closed")
+COLUMN_TYPE <- getCharacterProperty (properties, "column.type")
+COLUMN_AMOUNT <- getCharacterProperty (properties, "column.amount")
+COLUMN_REFERENCE <- getCharacterProperty (properties, "column.reference")
+COLUMN_COMMENTS <- getCharacterProperty (properties, "column.comments")
+VALUE_YES <- getCharacterProperty (properties, "value.yes")
+VALUE_NO <- getCharacterProperty (properties, "value.no")
+VALUE_CURRENCY <- getCharacterProperty (properties, "value.currency")
 
 
 # Registers the specified base data sheet with incomes and expenses.
 # The sheet is registered as is, with no further modifications.
 #
 # @returns Reference to the specified base data sheet with incomes and expenses, loaded from Google Drive.
-load.expenses.sheet <- function ( ) {
-	return (gs_title (SHEET.NAME, verbose = FALSE))
+loadExpensesSheet <- function ( ) {
+	return (gs_title (SHEET_NAME, verbose = FALSE))
 }
 
 
@@ -46,20 +46,20 @@ load.expenses.sheet <- function ( ) {
 # * Removes the currency symbol (`VALUE.CURRENCY`) from the input string.
 # * Removes the thousands separator (.) from the input string.
 # * Replaces the comma decimal separator (,) by the dot decimal separator (.).
-create.character.to.money.handler <- function ( ) {
+createCharacterToMoneyHandler <- function ( ) {
 	setClass ("money")
 	setAs (
 		"character",
 		"money",
 		function (from) {
-			return (as.numeric (gsub (VALUE.CURRENCY, "", gsub (",", ".", gsub ("\\.", "", from)))))
+			return (as.numeric (gsub (VALUE_CURRENCY, "", gsub (",", ".", gsub ("\\.", "", from)))))
 		}
 	)
 }
 
 
 # Creates a handler to convert items of type `character` with VALUE.YES/VALUE.NO values to logical values.
-create.character.to.yesno.handler <- function ( ) {
+createCharacterToYesNoHandler <- function ( ) {
 	setClass ("yesno")
 	setAs (
 		"character",
@@ -68,9 +68,9 @@ create.character.to.yesno.handler <- function ( ) {
 			transformation <- lapply (from, function (x) {
 				if (is.na (x)) {
 					return (FALSE)
-				} else if (x == VALUE.YES) {
+				} else if (x == VALUE_YES) {
 					return (TRUE)
-				} else if (x == VALUE.NO) {
+				} else if (x == VALUE_NO) {
 					return (FALSE)
 				} else {
 					return (FALSE)
@@ -84,7 +84,7 @@ create.character.to.yesno.handler <- function ( ) {
 
 
 # Creates a handler to convert items of type `character` to a `POSIXct` date with "%d/%m/%Y" format.
-create.character.to.posixct.handler <- function ( ) {
+createCharacterToPosixCTHandler <- function ( ) {
 	setClass ("pdate")
 	setAs (
 		"character",
@@ -102,43 +102,43 @@ create.character.to.posixct.handler <- function ( ) {
 # @param date Date to check.
 #
 # @returns `TRUE` if the date belongs to the previous month or before; `FALSE` otherwise.
-date.belongs.to.the.past <- function (date) {
+dateBelongsToThePast <- function (date) {
 	return (format (date, "%Y%m") < format (Sys.Date ( ), "%Y%m"))
 }
 
 
 # Determines if an estimated expense (budget) is closed yet.
 #
-# @param is.budget Logical value of the `Is.Budget` column, stating if the expense is an estimation (budget).
-# @param is.closed Logical value of the `Is.Closed` column, stating if the expense has been manually closed.
+# @param isBudget Logical value of the `Is.Budget` column, stating if the expense is an estimation (budget).
+# @param isClosed Logical value of the `Is.Closed` column, stating if the expense has been manually closed.
 #
 # @returns `TRUE` if the expense is an estimation and has been closed; `FALSE` otherwise.
-budget.has.been.closed.yet <- function (is.budget, is.closed) {
-	return (is.budget & is.closed)
+budgetHasBeenClosedYet <- function (isBudget, isClosed) {
+	return (isBudget & isClosed)
 }
 
 
 # Defines if an estimated expense (budget) belongs to the past.
 #
-# @param is.budget Logical value of the `Is.Budget` column, stating if the expense is an estimation (budget).
+# @param isBudget Logical value of the `Is.Budget` column, stating if the expense is an estimation (budget).
 # @param date Date of the expense.
 #
 # @returns `TRUE` if the expense is an estimation and belongs to the past; `FALSE` otherwise.
-budget.belongs.to.the.past <- function (is.budget, date) {
-	return (date.belongs.to.the.past (date) & is.budget)
+budgetBelongsToThePast <- function (isBudget, date) {
+	return (dateBelongsToThePast (date) & isBudget)
 }
 
 
 # Defines if an estimated expense (budget) in the current month has been consumed.
 #
-# @param is.budget Logical value of the `Is.Budget` column, stating if the expense is an estimation (budget).
+# @param isBudget Logical value of the `Is.Budget` column, stating if the expense is an estimation (budget).
 # @param date Date of the budget.
 # @param amount Budget amount.
-# @param budget.consumed Budget consumed.
+# @param budgetConsumed Budget consumed.
 #
 # @returns `TRUE` if the expense is a budget in the current month, and the budget consumed exceeds the estimation; `FALSE` otherwise.
-budget.is.current.and.consumed <- function (is.budget, date, amount, budget.consumed) {
-	return (!date.belongs.to.the.past (date) & is.budget & !is.na (budget.consumed) & (abs (amount) <= abs (budget.consumed)))
+budgetIsCurrentAndConsumed <- function (isBudget, date, amount, budgetConsumed) {
+	return (!dateBelongsToThePast (date) & isBudget & !is.na (budgetConsumed) & (abs (amount) <= abs (budgetConsumed)))
 }
 
 
@@ -149,17 +149,18 @@ budget.is.current.and.consumed <- function (is.budget, date, amount, budget.cons
 # * The budget belongs to a month in the past.
 # * The budget belongs to the current month, but has been consumed (the real expenses exceeds the budget amount).
 #
-# @param is.budget Logical value of the `Is.Budget` column, stating if the expense is an estimation (budget).
+# @param isBudget Logical value of the `Is.Budget` column, stating if the expense is an estimation (budget).
+# @param isClosed Logical value of the `Is.Closed` column, stating if the budget has been manually closed.
 # @param date Date of the budget.
 # @param amount Budget amount.
-# @param budget.consumed Budget consumed.
+# @param budgetConsumed Budget consumed.
 #
 # @returns `TRUE` if the expense is a budget which meets the conditions to be closed; `FALSE` otherwise.
-budget.should.be.closed <- function (is.budget, is.closed, date, amount, budget.consumed) {
+budgetShouldBeClosed <- function (isBudget, isClosed, date, amount, budgetConsumed) {
 	return (
-		budget.has.been.closed.yet (is.budget, is.closed) |
-		budget.belongs.to.the.past (is.budget, date) |
-		budget.is.current.and.consumed (is.budget, date, amount, budget.consumed)
+		budgetHasBeenClosedYet (isBudget, isClosed) |
+		budgetBelongsToThePast (isBudget, date) |
+		budgetIsCurrentAndConsumed (isBudget, date, amount, budgetConsumed)
 	)
 }
 
@@ -169,7 +170,7 @@ budget.should.be.closed <- function (is.budget, is.closed, date, amount, budget.
 # @param date Date to get the month from.
 #
 # @returns Factor from the numeric representation of the month in the date.
-get.month.from.date <- function (date) {
+getMonthFromDate <- function (date) {
 	return (as.factor (as.numeric (format (date, "%m"))))
 }
 
@@ -179,7 +180,7 @@ get.month.from.date <- function (date) {
 # @param date Date to get the year from.
 #
 # @returns Factor from the numeric representation of the year in the date.
-get.year.from.date <- function (date) {
+getYearFromDate <- function (date) {
 	return (as.factor (as.numeric (format (date, "%Y"))))
 }
 
@@ -193,29 +194,29 @@ get.year.from.date <- function (date) {
 # * Every estimated expense in the past is automatically closed.
 # * Every estimated expense in the current month which has been consumed is automatically closed.
 #
-# @param expenses.reference Reference to the base data sheet with incomes and expenses.
+# @param expensesReference Reference to the base data sheet with incomes and expenses.
 #
 # @returns A `tbl_df` data frame with the incomes/expenses data.
-get.expenses.data <- function (expenses.reference) {
+getExpensesData <- function (expensesReference) {
 	# Creates the handlers to read the sheet with the correct data types.
-	create.character.to.money.handler ( )
-	create.character.to.yesno.handler ( )
-	create.character.to.posixct.handler ( )
+	createCharacterToMoneyHandler ( )
+	createCharacterToYesNoHandler ( )
+	createCharacterToPosixCTHandler ( )
 
 	# Loads the sheet from Google Spreadsheets.
-	expenses.data <- get_via_csv (
-		expenses.reference,
+	expensesData <- get_via_csv (
+		expensesReference,
 		header = TRUE,
 		verbose = FALSE,
 		colClasses = c (
-			COLUMN.ID = "numeric",
-			COLUMN.DATE = "pdate",
-			COLUMN.IS.BUDGET = "yesno",
-			COLUMN.IS.CLOSED = "yesno",
-			COLUMN.TYPE = "factor",
-			COLUMN.AMOUNT = "money",
-			COLUMN.REFERENCE = "numeric",
-			COLUMN.COMMENTS = "character"
+			COLUMN_ID = "numeric",
+			COLUMN_DATE = "pdate",
+			COLUMN_IS_BUDGET = "yesno",
+			COLUMN_IS_CLOSED = "yesno",
+			COLUMN_TYPE = "factor",
+			COLUMN_AMOUNT = "money",
+			COLUMN_REFERENCE = "numeric",
+			COLUMN_COMMENTS = "character"
 		),
 		col.names = c (
 			"Id",
@@ -230,30 +231,30 @@ get.expenses.data <- function (expenses.reference) {
 	)
 
 	# Adds the `Month` and `Year` columns.
-	expenses.data <- mutate (
-		expenses.data,
-		Month = get.month.from.date (Date),
-		Year = get.year.from.date (Date)
+	expensesData <- mutate (
+		expensesData,
+		Month = getMonthFromDate (Date),
+		Year = getYearFromDate (Date)
 	)
 
 	# Closes automatically the budgets if they fall into one of these cases:
 	#
 	# * The budget belongs to a month in the past.
 	# * The budget belongs to the current month, but has been consumed (the real expenses exceeds the budget amount).
-	real.expenses.per.budget <- expenses.data %>% group_by (Reference) %>% summarise (Budget.Consumed = sum (Amount))
-	expenses.data <- left_join (expenses.data, real.expenses.per.budget, by = c ("Id" = "Reference"))
-	expenses.data <- mutate (
-		expenses.data,
+	realExpensesPerBudget <- expensesData %>% group_by (Reference) %>% summarise (Budget.Consumed = sum (Amount))
+	expensesData <- left_join (expensesData, realExpensesPerBudget, by = c ("Id" = "Reference"))
+	expensesData <- mutate (
+		expensesData,
 		Is.Closed = ifelse (
-			budget.should.be.closed (Is.Budget, Is.Closed, Date, Amount, Budget.Consumed),
+			budgetShouldBeClosed (Is.Budget, Is.Closed, Date, Amount, Budget.Consumed),
 			TRUE,
 			FALSE
 		)
 	) %>%
 		select (Id, Date, Month, Year, Is.Budget, Is.Closed, Type, Amount, Reference, Comments)
 
-	return (tbl_df (expenses.data))
+	return (tbl_df (expensesData))
 }
 
 
-expenses.data <- get.expenses.data (load.expenses.sheet ( ))
+expensesData <- getExpensesData (loadExpensesSheet ( ))

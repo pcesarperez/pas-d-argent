@@ -9,28 +9,28 @@
 # Loads a library into the workspace.
 # If the library is not installed, it tries to install it first.
 #
-# @param package.name Name of the library to load (empty string by default).
-load.package <- function (package.name = "") {
-	if (package.name != "") {
-		if (!package.name %in% installed.packages ( )) {
-			install.packages (package.name)
+# @param packageName Name of the library to load (empty string by default).
+loadPackage <- function (packageName = "") {
+	if (packageName != "") {
+		if (!packageName %in% installed.packages ( )) {
+			install.packages (packageName)
 		}
 
-		library (package = package.name, character.only = TRUE)
+		library (package = packageName, character.only = TRUE)
 	}
 }
 
 
 # Loads a library hosted in GitHub into the workspace.
 #
-# @param repo.name Name of the GitHub repo where the library is located (empty string by default).
-# @param package.name Name of the library to load (empty string by default).
-load.package.github <- function (repo.name = "", package.name = "") {
-	if ((repo.name != "") && (package.name != "")) {
-		if (!package.name %in% installed.packages ( )) {
-			devtools::install_github (repo.name)
+# @param repoName Name of the GitHub repo where the library is located (empty string by default).
+# @param packageName Name of the library to load (empty string by default).
+loadPackageGithub <- function (repoName = "", packageName = "") {
+	if ((repoName != "") && (packageName != "")) {
+		if (!packageName %in% installed.packages ( )) {
+			devtools::install_github (repoName)
 		}
 
-		library (package = package.name, character.only = TRUE)
+		library (package = packageName, character.only = TRUE)
 	}
 }

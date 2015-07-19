@@ -12,67 +12,67 @@ source.with.encoding ("properties.R", encoding = "UTF-8")
 source.with.encoding ("calc.R", encoding = "UTF-8")
 
 # Initialization.
-load.package ("mailR")
-properties <- get.properties.from.file ("mail.properties")
+loadPackage ("mailR")
+properties <- getPropertiesFromFile ("mail.properties")
 
 
 # Gets the current date in "%d/%m/%Y" format.
 #
 # @returns The current date in "%d/%m/%Y" format.
-get.current.date <- function ( ) {
+getCurrentDate <- function ( ) {
 	return (format (Sys.Date ( ), "%d/%m/%Y"))
 }
 
 
 # Gets the message subject on a daily basis.
 #
-# @param msg.subject Fixed part of the message subject.
+# @param msgSubject Fixed part of the message subject.
 #
 # @returns The message subject with the current date as a prefix.
-get.daily.message.subject <- function (msg.subject) {
-	return (paste (paste ("[", get.current.date ( ), "]", sep = ""), msg.subject))
+getDailyMessageSubject <- function (msgSubject) {
+	return (paste (paste ("[", getCurrentDate ( ), "]", sep = ""), msgSubject))
 }
 
 
 # Gets the message body on a daily basis.
 #
-# @param msg.body Message body with a placeholder to put the account balance to date.
-# @param current.balance Account balance to date.
+# @param msgBody Message body with a placeholder to put the account balance to date.
+# @param currentBalance Account balance to date.
 #
 # @returns The message body with the current account balance.
-get.daily.message.body <- function (msg.body, current.balance) {
-	return (gsub (pattern = "%", msg.body, replacement = round (current.balance, digits = 2)))
+getDailyMessageBody <- function (msgBody, currentBalance) {
+	return (gsub (pattern = "%", msgBody, replacement = round (currentBalance, digits = 2)))
 }
 
 
 # Properties setup.
-SENDER <- get.character.property (properties, "sender")
-RECIPIENTS <- get.multipart.property (properties, "recipients")
-MSG.SUBJECT <- get.daily.message.subject (get.character.property (properties, "msg.subject"))
-MSG.BODY <- get.daily.message.body (get.character.property (properties, "msg.body"), current.balance)
-MSG.ENCODING <- get.character.property (properties, "msg.encoding")
-SMTP.SERVER <- get.character.property (properties, "smtp.server")
-SMTP.PORT <- get.numeric.property (properties, "smtp.port")
-USER.NAME <- get.character.property (properties, "user.name")
-USER.PASSWORD <- get.character.property (properties, "user.password")
+SENDER <- getCharacterProperty (properties, "sender")
+RECIPIENTS <- getMultipartProperty (properties, "recipients")
+MSG_SUBJECT <- getDailyMessageSubject (getCharacterProperty (properties, "msg.subject"))
+MSG_BODY <- getDailyMessageBody (getCharacterProperty (properties, "msg.body"), currentBalance)
+MSG_ENCODING <- getCharacterProperty (properties, "msg.encoding")
+SMTP_SERVER <- getCharacterProperty (properties, "smtp.server")
+SMTP_PORT <- getNumericProperty (properties, "smtp.port")
+USER_NAME <- getCharacterProperty (properties, "user.name")
+USER_PASSWORD <- getCharacterProperty (properties, "user.password")
 
 
 # Sends an email with the current account balance.
-send.current.balance.email <- function ( ) {
+sendCurrentBalanceEmail <- function ( ) {
 	send.mail (
 		from = SENDER,
 		to = RECIPIENTS,
-		subject = MSG.SUBJECT,
-		body = MSG.BODY,
-		encoding = MSG.ENCODING,
+		subject = MSG_SUBJECT,
+		body = MSG_BODY,
+		encoding = MSG_ENCODING,
 		html = TRUE,
 		inline = FALSE,
 		smtp = list (
-			host.name = SMTP.SERVER,
-			port = SMTP.PORT,
+			host.name = SMTP_SERVER,
+			port = SMTP_PORT,
 			ssl = TRUE,
-			user.name = USER.NAME,
-			passwd = USER.PASSWORD
+			user.name = USER_NAME,
+			passwd = USER_PASSWORD
 		),
 		authenticate = TRUE,
 		send = TRUE,

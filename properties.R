@@ -10,12 +10,12 @@
 # Gets a set of properties (key/value pairs) from a properties file.
 # The properties have a `{key}={value}` format.
 #
-# @param path.to.file Path of the properties file.
+# @param pathToFile Path of the properties file.
 #
 # @returns A named vector with the key/value pairs in the properties file.
-get.properties.from.file <- function (path.to.file) {
+getPropertiesFromFile <- function (pathToFile) {
 	properties <- read.table (
-		path.to.file,
+		pathToFile,
 		header = FALSE,
 		sep = "=",
 		row.names = 1,
@@ -37,7 +37,7 @@ get.properties.from.file <- function (path.to.file) {
 # @param key Property key.
 #
 # @returns Property value with `character` format.
-get.character.property <- function (properties, key) {
+getCharacterProperty <- function (properties, key) {
 	return (as.character (properties [key]))
 }
 
@@ -48,7 +48,7 @@ get.character.property <- function (properties, key) {
 # @param key Property key.
 #
 # @returns Property value with `numeric` format.
-get.numeric.property <- function (properties, key) {
+getNumericProperty <- function (properties, key) {
 	return (as.numeric (properties [key]))
 }
 
@@ -60,6 +60,6 @@ get.numeric.property <- function (properties, key) {
 # @param key Property key.
 #
 # @returns Property value as a character vector.
-get.multipart.property <- function (properties, key) {
+getMultipartProperty <- function (properties, key) {
 	return (unlist (strsplit (properties [key], ",[ ]*"), use.names = FALSE))
 }
