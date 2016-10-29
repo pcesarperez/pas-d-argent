@@ -114,11 +114,11 @@ So, with our current estimations, we have yet 930€ to spend this month. Note t
 
 * The entry #2 is open, because the only real expense linked to that estimation (#6) does not exceed the -180€ guessed. So, #2 weighs in the balance, but #6 not.
 * The entry #4 is closed, _although it has not been manually closed_. It is closed because the entry #8 exceeds the amount guessed. Remember: when an estimation is exceeded, it does not longer make any sense. So, #8 weighs in the balance, but #4 not.
-* The entry #5 has been manually closed because it's a "one-shot" estimation (once finished, there will be no more expenses linked to it). So, #6 weighs in the balance, but #6 not.
+* The entry #5 has been manually closed because it's a "one-shot" estimation (once finished, there will be no more expenses linked to it). So, #7 weighs in the balance, but #5 not.
 
 ##Files
 
-There are two files right now in the repo:
+There are two important files right now in the repo:
 
 * `init.R`: Initialization functions. This loads a Google Spreadsheet containing the income/expenses data into the `expenses_data` variable.
 * `calc.R`: Statistical calculations. This contanins several functions to work with the data loaded in the first script (for example, getting the estimated monthly budget or getting a summary of the monthly budgets).
