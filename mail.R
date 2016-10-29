@@ -7,9 +7,9 @@
 
 
 # Modules.
-source.with.encoding ("packages.R", encoding = "UTF-8")
-source.with.encoding ("properties.R", encoding = "UTF-8")
-source.with.encoding ("calc.R", encoding = "UTF-8")
+source ("packages.R", encoding = "UTF-8")
+source ("properties.R", encoding = "UTF-8")
+source ("calc.R", encoding = "UTF-8")
 
 # Initialization.
 loadPackage ("mailR")

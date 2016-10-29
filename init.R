@@ -7,28 +7,21 @@
 
 
 # Modules.
-source.with.encoding ("properties.R", encoding = "UTF-8")
-source.with.encoding ("packages.R", encoding = "UTF-8")
+source ("properties.R", encoding = "UTF-8")
+source ("packages.R", encoding = "UTF-8")
 
 # Initialization.
+loadPackage ("methods")
 loadPackage ("devtools")
-loadPackageGithub ("jennybc/googlesheets", "googlesheets")
+loadPackage ("googlesheets")
 loadPackage ("dplyr")
 properties <- getPropertiesFromFile ("sheet.properties")
 
 # Properties setup.
 SHEET_NAME <- getCharacterProperty (properties, "sheet.name")
-COLUMN_ID <- getCharacterProperty (properties, "column.id")
-COLUMN_DATE <- getCharacterProperty (properties, "column.date")
-COLUMN_IS_BUDGET <- getCharacterProperty (properties, "column.is.budget")
-COLUMN_IS_CLOSED <- getCharacterProperty (properties, "column.is.closed")
-COLUMN_TYPE <- getCharacterProperty (properties, "column.type")
-COLUMN_AMOUNT <- getCharacterProperty (properties, "column.amount")
-COLUMN_REFERENCE <- getCharacterProperty (properties, "column.reference")
-COLUMN_COMMENTS <- getCharacterProperty (properties, "column.comments")
+WORKSHEET_NAME <- getCharacterProperty (properties, "worksheet.name")
 VALUE_YES <- getCharacterProperty (properties, "value.yes")
 VALUE_NO <- getCharacterProperty (properties, "value.no")
-VALUE_CURRENCY <- getCharacterProperty (properties, "value.currency")
 
 
 # Registers the specified base data sheet with incomes and expenses.
@@ -40,59 +33,21 @@ loadExpensesSheet <- function ( ) {
 }
 
 
-# Creates a handler to convert items of type `character` in items of type `money`.
-# The handler does the following:
-#
-# * Removes the currency symbol (`VALUE.CURRENCY`) from the input string.
-# * Removes the thousands separator (.) from the input string.
-# * Replaces the comma decimal separator (,) by the dot decimal separator (.).
-createCharacterToMoneyHandler <- function ( ) {
-	setClass ("money")
-	setAs (
-		"character",
-		"money",
-		function (from) {
-			return (as.numeric (gsub (VALUE_CURRENCY, "", gsub (",", ".", gsub ("\\.", "", from)))))
+# Converts a vector of items of type `character` with `VALUE.YES`/`VALUE.NO` values to logical values.
+convertIntoLogicalValues <- function (character_vector) {
+	transformation <- lapply (character_vector, function (x) {
+		if (is.na (x)) {
+			return (FALSE)
+		} else if (x == VALUE_YES) {
+			return (TRUE)
+		} else if (x == VALUE_NO) {
+			return (FALSE)
+		} else {
+			return (FALSE)
 		}
-	)
-}
+	})
 
-
-# Creates a handler to convert items of type `character` with VALUE.YES/VALUE.NO values to logical values.
-createCharacterToYesNoHandler <- function ( ) {
-	setClass ("yesno")
-	setAs (
-		"character",
-		"yesno",
-		function (from) {
-			transformation <- lapply (from, function (x) {
-				if (is.na (x)) {
-					return (FALSE)
-				} else if (x == VALUE_YES) {
-					return (TRUE)
-				} else if (x == VALUE_NO) {
-					return (FALSE)
-				} else {
-					return (FALSE)
-				}
-			})
-
-			return (unlist (transformation))
-		}
-	)
-}
-
-
-# Creates a handler to convert items of type `character` to a `POSIXct` date with "%d/%m/%Y" format.
-createCharacterToPosixCTHandler <- function ( ) {
-	setClass ("pdate")
-	setAs (
-		"character",
-		"pdate",
-		function (from) {
-			return (as.Date (from, tz = "", format = "%d/%m/%Y"))
-		}
-	)
+	return (unlist (transformation))
 }
 
 
@@ -171,7 +126,7 @@ budgetShouldBeClosed <- function (isBudget, isClosed, date, amount, budgetConsum
 #
 # @returns Factor from the numeric representation of the month in the date.
 getMonthFromDate <- function (date) {
-	return (as.factor (as.numeric (format (date, "%m"))))
+	return (as.factor (as.numeric (format (as.Date (date, "%d/%m/%Y"), "%m"))))
 }
 
 
@@ -181,7 +136,7 @@ getMonthFromDate <- function (date) {
 #
 # @returns Factor from the numeric representation of the year in the date.
 getYearFromDate <- function (date) {
-	return (as.factor (as.numeric (format (date, "%Y"))))
+	return (as.factor (as.numeric (format (as.Date (date, "%d/%m/%Y"), "%Y"))))
 }
 
 
@@ -198,29 +153,30 @@ getYearFromDate <- function (date) {
 #
 # @returns A `tbl_df` data frame with the incomes/expenses data.
 getExpensesData <- function (expensesReference) {
-	# Creates the handlers to read the sheet with the correct data types.
-	createCharacterToMoneyHandler ( )
-	createCharacterToYesNoHandler ( )
-	createCharacterToPosixCTHandler ( )
+	# Specifies the decimal and grouping mark for currency values.
+	spanishLocale <- locale (grouping_mark = ".", decimal_mark = ",")
 
 	# Loads the sheet from Google Spreadsheets.
-	expensesData <- get_via_csv (
+	expensesData <- gs_read (
 		expensesReference,
-		header = TRUE,
+		ws = WORKSHEET_NAME,
 		verbose = FALSE,
-		colClasses = c (
-			COLUMN_ID = "numeric",
-			COLUMN_DATE = "pdate",
-			COLUMN_IS_BUDGET = "yesno",
-			COLUMN_IS_CLOSED = "yesno",
-			COLUMN_TYPE = "factor",
-			COLUMN_AMOUNT = "money",
-			COLUMN_REFERENCE = "numeric",
-			COLUMN_COMMENTS = "character"
+		skip = 1,
+		col_types = cols (
+			Id = col_integer ( ),
+			Date = col_date ("%d/%m/%Y"),
+			Is.Shared = col_character ( ),
+			Is.Budget = col_character ( ),
+			Is.Closed = col_character ( ),
+			Type = col_factor (c ("Niños", "Agua", "Coche", "Salud", "Gatuno", "Gasoil", "Gasto extra", "Gasto fijo", "Hogar", "Luz", "Nómina", "Ocio", "Restaurante", "Ropa", "Supermercado", "Teléfono", "Ingreso extra")),
+			Amount = col_character ( ),
+			Reference = col_integer ( ),
+			Comments = col_character ( )
 		),
-		col.names = c (
+		col_names = c (
 			"Id",
 			"Date",
+			"Is.Shared",
 			"Is.Budget",
 			"Is.Closed",
 			"Type",
@@ -237,6 +193,17 @@ getExpensesData <- function (expensesReference) {
 		Year = getYearFromDate (Date)
 	)
 
+	# Transforms the following columns:
+	#
+	# * `Is.Budget` should be converted to a logical value.
+	# * `Is.Closed` should be converted to a logical value.
+	# * `Is.Shared` should be converted to a logical value.
+	# * `Amount` should be converted to a numeric value, taking into account it's actually a currency value.
+	expensesData$Is.Shared <- convertIntoLogicalValues (expensesData$Is.Shared)
+	expensesData$Is.Budget <- convertIntoLogicalValues (expensesData$Is.Budget)
+	expensesData$Is.Closed <- convertIntoLogicalValues (expensesData$Is.Closed)
+	expensesData$Amount <- parse_number(expensesData$Amount, locale = spanishLocale)
+
 	# Closes automatically the budgets if they fall into one of these cases:
 	#
 	# * The budget belongs to a month in the past.
@@ -251,7 +218,7 @@ getExpensesData <- function (expensesReference) {
 			FALSE
 		)
 	) %>%
-		select (Id, Date, Month, Year, Is.Budget, Is.Closed, Type, Amount, Reference, Comments)
+		select (Id, Date, Month, Year, Is.Shared, Is.Budget, Is.Closed, Type, Amount, Reference, Comments)
 
 	return (tbl_df (expensesData))
 }

@@ -7,7 +7,7 @@
 
 
 # Modules.
-source.with.encoding ("init.R", encoding = "UTF-8")
+source ("init.R", encoding = "UTF-8")
 
 
 # Gets the current month.
@@ -155,3 +155,5 @@ getActualBalance <- function (expenses, month = NA, year = NA) {
 # Automatic calculations for the current month and year.
 currentBudgetSummary <- getBudgetSummary (expensesData)
 currentBalance <- getActualBalance (expensesData)
+
+print (currentBalance)
