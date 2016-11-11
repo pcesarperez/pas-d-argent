@@ -15,6 +15,7 @@ loadPackage ("methods")
 loadPackage ("devtools")
 loadPackage ("googlesheets")
 loadPackage ("dplyr")
+loadPackage ("readr")
 properties <- getPropertiesFromFile ("sheet.properties")
 
 # Properties setup.
