@@ -1,12 +1,12 @@
-#Pas d'argent 0.91
+# Pas d'argent 0.91
 
-##Introduction
+## Introduction
 
 This is a personal project to create a home economy management software in R language. I'm not trying to create a commercial product here (yet), but a series of scripts to help me keeping an eye over my economy.
 
 By the way, "pas d'argent" means "no money" in French `:P` Ah, and I am not economist, so... Please, indulge me if I am choosing incorrect terms to describe what I have done here.
 
-##Why?
+## Why?
 
 The main idea behind all this is that I should be able to answer one simple question at any time: how much budget I have this month? In other words, how much money I can spend until the end of the month?
 
@@ -18,7 +18,7 @@ Then I started making "projections": if I knew I would have an expense but I did
 
 But this is all but feverish nonsense without a proper example.
 
-##Example
+## Example
 
 Let's say I have this sheet of incomes/expenses with totally unrealistic data:
 
@@ -45,27 +45,27 @@ The columns are pretty self-explanatory, but still:
 
 The nature of the entries deserve further explanation.
 
-##Types of entry
+## Types of entry
 
 There is a subtle taxonomy which divides the entries considering _their weight into the final balance_. This sounds pretentious. It is.
 
-###Incomes
+## #Incomes
 
 Self-explanatory. These are the positive entries, and are annotated as-is.
 
-###Direct expenses
+## #Direct expenses
 
 These are the expenses which aren't related to any estimation (so, the `Reference` column has no value). For example, what you pay for a coffee in the bar or an on-line course. These expenses are not related to anything else.
 
-###Estimations
+## #Estimations
 
 These are expenses which amount I don't know in advance, but I know they will take place eventually, so I guess the amount. The `Is.Budget` column has to have a "Yes" value.
 
-###Linked expenses
+## #Linked expenses
 
 These are expenses related to a previous estimation, so the `Reference` column has a value linking the expense to the estimation. There can be more than one expense linked to a single estimation.
 
-##More on that
+## More on that
 
 Well, Ok, maybe it's not crystal clear, but let me explain.
 
@@ -92,7 +92,7 @@ So, which are the conditions in which we could consider an estimation as closed?
 2. The estimation has been annotated in the past. Every estimation which belongs to a previous month is automatically closed.
 3. The estimation has been exceeded. If we miscalculate an estimation, then it no longer makes any sense, so the real expenses linked to that estimation will be took into account.
 
-##Your budget
+## Your budget
 
 Remember the main idea: knowing the remaining budget any time over the current month. The formula to calculate the budget is:
 
@@ -116,13 +116,13 @@ So, with our current estimations, we have yet 930€ to spend this month. Note t
 * The entry #4 is closed, _although it has not been manually closed_. It is closed because the entry #8 exceeds the amount guessed. Remember: when an estimation is exceeded, it does not longer make any sense. So, #8 weighs in the balance, but #4 not.
 * The entry #5 has been manually closed because it's a "one-shot" estimation (once finished, there will be no more expenses linked to it). So, #7 weighs in the balance, but #5 not.
 
-##Files
+## Files
 
 There are two important files right now in the repo:
 
 * `init.R`: Initialization functions. This loads a Google Spreadsheet containing the income/expenses data into the `expenses_data` variable.
 * `calc.R`: Statistical calculations. This contains several functions to work with the data loaded in the first script (for example, getting the estimated monthly budget or getting a summary of the monthly budgets).
 
-##Additional notes
+## Additional notes
 
 * The spreadsheet I am using is private, of course, but I intend to create a playground, public, read-only sheet to illustrate how the system works.
