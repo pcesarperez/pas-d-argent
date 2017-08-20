@@ -1,5 +1,5 @@
 # calc.R
-# Pas d'argent 0.9
+# Pas d'argent 0.91
 #
 # This is a personal project to manage my home economy using Google Spreadsheets and R scripts.
 #
@@ -110,7 +110,7 @@ getProjectedBudgetsBalance <- function (budgetSummary) {
 }
 
 
-# Gets the total amount of actual expenses linked to budgets for a given bugdet summary.
+# Gets the total amount of actual expenses linked to budgets for a given budget summary.
 #
 # @param budgetSummary Budget summary.
 #

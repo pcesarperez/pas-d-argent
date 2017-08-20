@@ -1,8 +1,8 @@
-#Pas d'argent
+#Pas d'argent 0.91
 
 ##Introduction
 
-This is a personal project to create a home economy managent software in R language. I'm not trying to create a commercial product here (yet), but a series of scripts to help me keeping an eye over my economy.
+This is a personal project to create a home economy management software in R language. I'm not trying to create a commercial product here (yet), but a series of scripts to help me keeping an eye over my economy.
 
 By the way, "pas d'argent" means "no money" in French `:P` Ah, and I am not economist, so... Please, indulge me if I am choosing incorrect terms to describe what I have done here.
 
@@ -12,7 +12,7 @@ The main idea behind all this is that I should be able to answer one simple ques
 
 I started keeping track of my incomes and expenses few years ago. At first, I wrote down just the inputs (if I remembered to, which didn't happen frequently). And, even though I am a software engineer, I used an old, analog and faithful Moleskine and a fountain pen to do the job. If you have to do it the old way, at least do it with style.
 
-One of the problems I had with this approach was, of course, how difficult it was to know how much I could spare in a certain moment. There were expenses I knew for sure would happen (like house renting, Internet or electricity), but there were many other expenses I could't keep track of properly.
+One of the problems I had with this approach was, of course, how difficult it was to know how much I could spare in a certain moment. There were expenses I knew for sure would happen (like house renting, Internet or electricity), but there were many other expenses I couldn't keep track of properly.
 
 Then I started making "projections": if I knew I would have an expense but I didn't know the exact amount, I guessed, _and I took the expense for real_. Then, as the real expenses happened, I wrote them down, substracting from the initial projection and adjusting my budget.
 
@@ -55,7 +55,7 @@ Self-explanatory. These are the positive entries, and are annotated as-is.
 
 ###Direct expenses
 
-These are the expenses which aren't related to any estimation (so, the `Reference` column has no value). For example, what you pay for a coffee in the bar or an online course. These expenses are not related to anything else.
+These are the expenses which aren't related to any estimation (so, the `Reference` column has no value). For example, what you pay for a coffee in the bar or an on-line course. These expenses are not related to anything else.
 
 ###Estimations
 
@@ -121,7 +121,7 @@ So, with our current estimations, we have yet 930€ to spend this month. Note t
 There are two important files right now in the repo:
 
 * `init.R`: Initialization functions. This loads a Google Spreadsheet containing the income/expenses data into the `expenses_data` variable.
-* `calc.R`: Statistical calculations. This contanins several functions to work with the data loaded in the first script (for example, getting the estimated monthly budget or getting a summary of the monthly budgets).
+* `calc.R`: Statistical calculations. This contains several functions to work with the data loaded in the first script (for example, getting the estimated monthly budget or getting a summary of the monthly budgets).
 
 ##Additional notes
 

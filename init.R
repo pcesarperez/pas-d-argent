@@ -1,5 +1,5 @@
 # init.R
-# Pas d'argent 0.9
+# Pas d'argent 0.91
 #
 # This is a personal project to manage my home economy using Google Spreadsheets and R scripts.
 #
@@ -166,7 +166,6 @@ getExpensesData <- function (expensesReference) {
 		col_types = cols (
 			Id = col_integer ( ),
 			Date = col_date ("%d/%m/%Y"),
-			Is.Shared = col_character ( ),
 			Is.Budget = col_character ( ),
 			Is.Closed = col_character ( ),
 			Type = col_factor (c ("Niños", "Agua", "Coche", "Salud", "Gatuno", "Gasoil", "Gasto extra", "Gasto fijo", "Hogar", "Luz", "Nómina", "Ocio", "Restaurante", "Ropa", "Supermercado", "Teléfono", "Ingreso extra")),
@@ -177,7 +176,6 @@ getExpensesData <- function (expensesReference) {
 		col_names = c (
 			"Id",
 			"Date",
-			"Is.Shared",
 			"Is.Budget",
 			"Is.Closed",
 			"Type",
@@ -198,9 +196,7 @@ getExpensesData <- function (expensesReference) {
 	#
 	# * `Is.Budget` should be converted to a logical value.
 	# * `Is.Closed` should be converted to a logical value.
-	# * `Is.Shared` should be converted to a logical value.
 	# * `Amount` should be converted to a numeric value, taking into account it's actually a currency value.
-	expensesData$Is.Shared <- convertIntoLogicalValues (expensesData$Is.Shared)
 	expensesData$Is.Budget <- convertIntoLogicalValues (expensesData$Is.Budget)
 	expensesData$Is.Closed <- convertIntoLogicalValues (expensesData$Is.Closed)
 	expensesData$Amount <- parse_number(expensesData$Amount, locale = spanishLocale)
@@ -219,7 +215,7 @@ getExpensesData <- function (expensesReference) {
 			FALSE
 		)
 	) %>%
-		select (Id, Date, Month, Year, Is.Shared, Is.Budget, Is.Closed, Type, Amount, Reference, Comments)
+		select (Id, Date, Month, Year, Is.Budget, Is.Closed, Type, Amount, Reference, Comments)
 
 	return (tbl_df (expensesData))
 }

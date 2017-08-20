@@ -1,5 +1,5 @@
 # properties.R
-# Pas d'argent 0.9
+# Pas d'argent 0.91
 #
 # This is a personal project to manage my home economy using Google Spreadsheets and R scripts.
 #

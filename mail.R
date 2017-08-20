@@ -1,9 +1,9 @@
 # mail.R
-# Pas d'argent 0.9
+# Pas d'argent 0.91
 #
 # This is a personal project to manage my home economy using Google Spreadsheets and R scripts.
 #
-# Mailing protocol to send information about the current acount balance via mail.
+# Mailing protocol to send information about the current account balance via mail.
 
 
 # Modules.
