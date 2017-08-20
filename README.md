@@ -43,7 +43,7 @@ The columns are pretty self-explanatory, but still:
 * `Amount`: Enough said.
 * `Reference`: This column is used to link _real_ entries to _estimated_ entries. It's related to the `Is.Budget` and `Is.Closed` columns.
 
-The nature of the entries deserve further explanation.
+The nature of the entries deserves further explanation.
 
 ## Types of entry
 
