@@ -49,19 +49,19 @@ The nature of the entries deserve further explanation.
 
 There is a subtle taxonomy which divides the entries considering _their weight into the final balance_. This sounds pretentious. It is.
 
-## #Incomes
+### Incomes
 
 Self-explanatory. These are the positive entries, and are annotated as-is.
 
-## #Direct expenses
+### Direct expenses
 
 These are the expenses which aren't related to any estimation (so, the `Reference` column has no value). For example, what you pay for a coffee in the bar or an on-line course. These expenses are not related to anything else.
 
-## #Estimations
+### Estimations
 
 These are expenses which amount I don't know in advance, but I know they will take place eventually, so I guess the amount. The `Is.Budget` column has to have a "Yes" value.
 
-## #Linked expenses
+### Linked expenses
 
 These are expenses related to a previous estimation, so the `Reference` column has a value linking the expense to the estimation. There can be more than one expense linked to a single estimation.
 
